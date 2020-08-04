@@ -1,8 +1,14 @@
-# NoComponentWarn
+# ![](resources/nocomponentwarn/32x32.png) NoComponentWarn
 
 A Fusion 360 add-in that warns when features are created outside components.
 
+Currently Windows-only.
+
+
+
 ![Screenshot](screenshot.png)
+
+
 
 ## Installation
 Download the add-in from the [Releases](https://github.com/thomasa88/NoComponentWarn/releases) page.
