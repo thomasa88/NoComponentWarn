@@ -21,6 +21,7 @@
 
 import adsk.core, adsk.fusion, adsk.cam, traceback
 
+import ctypes
 import os
 import re
 import sys
@@ -41,6 +42,16 @@ importlib.reload(thomasa88lib.error)
 
 COMPONENT_WARN_ID = 'thomasa88_componentWarn'
 
+CREATION_COMMANDS_ = set([
+    'SketchCreate',
+    'PrimitiveBox',
+    'PrimitiveCylinder',
+    'PrimitiveSphere',
+    'PrimitiveTorus',
+    'PrimitiveCoil',
+    'PrimitivePipe',
+])
+
 app_ = None
 ui_ = None
 
@@ -48,97 +59,67 @@ error_catcher_ = thomasa88lib.error.ErrorCatcher(msgbox_in_debug=False)
 events_manager_ = thomasa88lib.events.EventsManager(error_catcher_)
 manifest_ = thomasa88lib.manifest.read()
 
-warn_cmd_def_ = None
-disabled_for_ = []
+disabled_for_documents_ = []
 
-def command_terminated_handler(args):
+def command_handler(args):
     eventArgs = adsk.core.ApplicationCommandEventArgs.cast(args)
     
-    #print("TERMINATED", eventArgs.commandId, eventArgs.terminationReason, app_.activeEditObject.classType())
+    #print("COMMAND", eventArgs.commandId, eventArgs.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
 
-    if eventArgs.commandId != 'SketchCreate':
+    # The quickest test first
+    if app_.activeEditObject != app_.activeProduct.rootComponent:
         return
-    
-    # Checking here. We would improve performance by checking in documentActivated, but
+
+    # Checking disabled here. We would improve performance by checking in documentActivated, but
     # that event does not always fire (2020-08-02)
     # Bug: https://forums.autodesk.com/t5/fusion-360-api-and-scripts/api-bug-application-documentactivated-event-do-not-raise/m-p/9020750
-    if app_.activeDocument in disabled_for_:
+    if app_.activeDocument in disabled_for_documents_:
         return
 
-    # It does not matter if we catch the command in starting, creating or terminated;
-    # Our "block" will always come later. We can do an inputBox() in starting to ask
-    # early, but our action won't get through the event queue until after the sketch
-    # is created, so there's no point.
-    if eventArgs.commandId == 'SketchCreate' and app_.activeEditObject.parentComponent == app_.activeProduct.rootComponent:
-        warn_cmd_def_.execute()
+    if eventArgs.commandId not in CREATION_COMMANDS_:
+        return
 
-def warn_command_created_handler(args):
-    eventArgs = adsk.core.CommandCreatedEventArgs.cast(args)
-
-    # The nifty thing with cast is that code completion then knows the object type
-    cmd = adsk.core.Command.cast(args.command)
-
-    cmd.setDialogInitialSize(290, 130)
-    cmd.setDialogMinimumSize(290, 130)
-
-    events_manager_.add_handler(cmd.destroy,
-                                adsk.core.CommandEventHandler,
-                                warn_command_destroy_handler)
+    # We must use "created" or "starting" to catch Box and the other solids.
+    # If we execute our own command at that step, we abort the command the user
+    # started. We could in theory re-execute that command, but we might lose
+    # data(?). Going for Windows MessageBox instead.
+    MB_ICONWARNING = 0x00000030
     
-    events_manager_.add_handler(cmd.inputChanged,
-                                adsk.core.InputChangedEventHandler,
-                                warn_command_input_changed_handler)
+    MB_ABORTRETRYIGNORE = 0x00000002
+    MB_YESNOCANCEL = 0x00000003
+    MB_YESNO = 0x00000004
 
-    cmd.commandInputs.addTextBoxCommandInput('text1', 'This feature has no component.\nContinue?', '', 1, True)
-    cmd.commandInputs.addBoolValueInput('disable', "Disable warning in this session", True, '', False)
-    cmd.okButtonText = 'Continue (Enter)'
-    cmd.cancelButtonText = 'Abort Feature (Esc)'
+    IDABORT = 3
+    IDRETRY = 4
+    IDIGNORE = 5
+    IDYES = 6
+    IDNO = 7
 
-    # Don't spam the right click shortcut menu
-    cmd.isRepeatable = False
-    cmd.isExecutedWhenPreEmpted = False
-
-def warn_command_input_changed_handler(args):
-    eventArgs = adsk.core.InputChangedEventArgs.cast(args)
-    if eventArgs.input.id == 'disable':
-        global disabled_for_
+    ret = ctypes.windll.user32.MessageBoxW(None, 'Not inside any component. Continue?\n\n' +
+                                           '"Retry" will let you continue.\n'
+                                           '"Ignore" will ignore parentless features in this document sesssion.',
+                                           f"No Component Warning (v {manifest_['version']})",
+                                           MB_ICONWARNING | MB_ABORTRETRYIGNORE)
+    
+    # Not checking for error. Just let user continue in that case.
+    if ret == IDABORT:
+        eventArgs.isCanceled = True
+    elif ret == IDIGNORE:
         # Document.dataFile only works when the document is saved (then we can use "id")
         # Document.name always works but is the document name - include the vX version indicator.
-        disabled_for_.append(app_.activeDocument)
-
-def warn_command_destroy_handler(args):
-    eventArgs = adsk.core.CommandEventArgs.cast(args)
-    if eventArgs.terminationReason == adsk.core.CommandTerminationReason.CancelledTerminationReason:
-        ui_.commandDefinitions.itemById('UndoCommand').execute()
+        disabled_for_documents_.append(app_.activeDocument)
 
 def run(context):
     global app_
     global ui_
-    global warn_cmd_def_
     with error_catcher_:
         app_ = adsk.core.Application.get()
         ui_ = app_.userInterface
 
-        old_cmd_def = ui_.commandDefinitions.itemById(COMPONENT_WARN_ID)
-        if old_cmd_def:
-            old_cmd_def.deleteMe()
-
-        warn_cmd_def_ = ui_.commandDefinitions.addButtonDefinition(COMPONENT_WARN_ID,
-                                                                    f'No Component (v {manifest_["version"]})',
-                                                                    '')
-
-        events_manager_.add_handler(warn_cmd_def_.commandCreated,
-                                    adsk.core.CommandCreatedEventHandler,
-                                    warn_command_created_handler)
-
-        events_manager_.add_handler(ui_.commandTerminated,
+        events_manager_.add_handler(ui_.commandStarting,
                                     adsk.core.ApplicationCommandEventHandler,
-                                    command_terminated_handler)
+                                    command_handler)
 
 def stop(context):
     with error_catcher_:
         events_manager_.clean_up()
-
-        cmd_def = ui_.commandDefinitions.itemById(COMPONENT_WARN_ID)
-        if cmd_def:
-            cmd_def.deleteMe()
