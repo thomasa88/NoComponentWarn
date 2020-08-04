@@ -66,6 +66,10 @@ def command_handler(args):
     
     #print("COMMAND", eventArgs.commandId, eventArgs.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
 
+    if ui_.activeWorkspace.id != 'FusionSolidEnvironment':
+        # Only for the Design workspace
+        return
+
     # The quickest test first
     if app_.activeEditObject != app_.activeProduct.rootComponent:
         return
