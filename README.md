@@ -23,6 +23,8 @@ Press Shift+S in Fusion 360 and go to the *Add-Ins* tab. Then select the add-in 
 
 A warning will be shown every time a new feature is created outside a component.
 
+Select *Stop warning* to disable warnings in the current session for the current document.
+
 ## Author
 
 This add-in is created by Thomas Axelsson.
