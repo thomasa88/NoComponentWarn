@@ -2,6 +2,8 @@
 
 A Fusion 360 add-in that warns when features are created outside components.
 
+A warning will be shown every time a new feature is created outside a component. At that point, the user can choose to either Cancel, Continue or Stop the warning messages for the current document session.
+
 Currently Windows-only.
 
 
@@ -23,7 +25,11 @@ Press Shift+S in Fusion 360 and go to the *Add-Ins* tab. Then select the add-in 
 
 A warning will be shown every time a new feature is created outside a component.
 
-Select *Stop warning* to disable warnings in the current session for the current document.
+At that point, the following choices are given:
+
+* *Cancel* (Esc): Cancel the operation
+* *Continue* (Enter): Go through with the operation and create the feature
+* *Stop warning*: Go through with the operation and stop warning for this document for this session.
 
 ## Author
 
