@@ -32,3 +32,8 @@ This add-in is created by Thomas Axelsson.
 ## License
 
 This project is licensed under GPL v3 or any later version. See [LICENSE](LICENSE).
+
+## Changelog
+
+* v 0.2.0
+  * Better button labels
