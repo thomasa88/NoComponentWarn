@@ -60,15 +60,12 @@ events_manager_ = thomasa88lib.events.EventsManager(error_catcher_)
 manifest_ = thomasa88lib.manifest.read()
 
 disabled_for_documents_ = []
+cmd_starting_handler_info_ = None
 
 def command_handler(args):
     eventArgs = adsk.core.ApplicationCommandEventArgs.cast(args)
     
     #print("COMMAND", eventArgs.commandId, eventArgs.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
-
-    if ui_.activeWorkspace.id != 'FusionSolidEnvironment':
-        # Only for the Design workspace
-        return
 
     # The quickest test first
     if app_.activeEditObject != app_.activeProduct.rootComponent:
@@ -113,16 +110,39 @@ def command_handler(args):
         # Document.name always works but is the document name - include the vX version indicator.
         disabled_for_documents_.append(app_.activeDocument)
 
+def workspace_activated_handler(args: adsk.core.WorkspaceEventArgs):
+    if args.workspace.id == 'FusionSolidEnvironment':
+        enable()
+
+def workspace_pre_deactivate_handler(args: adsk.core.WorkspaceEventArgs):
+    disable()
+
+def enable():
+    global cmd_starting_handler_info_
+    if not cmd_starting_handler_info_:
+        cmd_starting_handler_info_ = events_manager_.add_handler(ui_.commandStarting,
+                                                                 callback=command_handler)
+
+def disable():
+    global cmd_starting_handler_info_
+    if cmd_starting_handler_info_:
+        cmd_starting_handler_info_ = events_manager_.remove_handler(cmd_starting_handler_info_)
+
 def run(context):
     global app_
     global ui_
     with error_catcher_:
         app_ = adsk.core.Application.get()
         ui_ = app_.userInterface
-
-        events_manager_.add_handler(ui_.commandStarting,
-                                    adsk.core.ApplicationCommandEventHandler,
-                                    command_handler)
+        
+        events_manager_.add_handler(ui_.workspaceActivated,
+                                    callback=workspace_activated_handler)
+        
+        events_manager_.add_handler(ui_.workspacePreDeactivate,
+                                    callback=workspace_pre_deactivate_handler)
+        
+        if ui_.activeWorkspace.id == 'FusionSolidEnvironment':
+            enable()
 
 def stop(context):
     with error_catcher_:
