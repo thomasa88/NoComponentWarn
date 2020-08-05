@@ -88,7 +88,7 @@ def command_handler(args):
     # data(?). Going for a MessageBox instead.
     
     # Using a button combo with "Cancel", as that will map to Esc
-    ret = thomasa88lib.win.msgbox.custom_msgbox('You are creating are creating a feature without any component.',
+    ret = thomasa88lib.win.msgbox.custom_msgbox('You are creating a feature without any component.',
                                                 f"No Component Warning (v {manifest_['version']})",
                                                 (thomasa88lib.win.msgbox.MB_ICONWARNING |
                                                  thomasa88lib.win.msgbox.MB_CANCELTRYCONTINUE |

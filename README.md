@@ -35,5 +35,7 @@ This project is licensed under GPL v3 or any later version. See [LICENSE](LICENS
 
 ## Changelog
 
+* v 0.2.1
+  * Fix duplicated words in dialog text
 * v 0.2.0
   * Better button labels
