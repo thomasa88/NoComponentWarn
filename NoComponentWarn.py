@@ -33,12 +33,14 @@ NAME = 'NoComponentWarn'
 from .thomasa88lib import events
 from .thomasa88lib import manifest
 from .thomasa88lib import error
+from .thomasa88lib.win import msgbox
 
 # Force modules to be fresh during development
 import importlib
 importlib.reload(thomasa88lib.events)
 importlib.reload(thomasa88lib.manifest)
 importlib.reload(thomasa88lib.error)
+importlib.reload(thomasa88lib.win.msgbox)
 
 COMPONENT_WARN_ID = 'thomasa88_componentWarn'
 
@@ -83,29 +85,23 @@ def command_handler(args):
     # We must use "created" or "starting" to catch Box and the other solids.
     # If we execute our own command at that step, we abort the command the user
     # started. We could in theory re-execute that command, but we might lose
-    # data(?). Going for Windows MessageBox instead.
-    MB_ICONWARNING = 0x00000030
+    # data(?). Going for a MessageBox instead.
     
-    MB_ABORTRETRYIGNORE = 0x00000002
-    MB_YESNOCANCEL = 0x00000003
-    MB_YESNO = 0x00000004
+    # Using a button combo with "Cancel", as that will map to Esc
+    ret = thomasa88lib.win.msgbox.custom_msgbox('You are creating are creating a feature without any component.',
+                                                f"No Component Warning (v {manifest_['version']})",
+                                                (thomasa88lib.win.msgbox.MB_ICONWARNING |
+                                                 thomasa88lib.win.msgbox.MB_CANCELTRYCONTINUE |
+                                                 thomasa88lib.win.msgbox.MB_DEFBUTTON2),
+                                                { thomasa88lib.win.msgbox.IDCANCEL: 'Cancel', # No localization
+                                                  thomasa88lib.win.msgbox.IDTRYAGAIN: '&Continue',
+                                                  thomasa88lib.win.msgbox.IDCONTINUE: "&Stop warning" })
 
-    IDABORT = 3
-    IDRETRY = 4
-    IDIGNORE = 5
-    IDYES = 6
-    IDNO = 7
-
-    ret = ctypes.windll.user32.MessageBoxW(None, 'Not inside any component. Continue?\n\n' +
-                                           '"Retry" will let you continue.\n'
-                                           '"Ignore" will ignore parentless features in this document sesssion.',
-                                           f"No Component Warning (v {manifest_['version']})",
-                                           MB_ICONWARNING | MB_ABORTRETRYIGNORE)
-    
     # Not checking for error. Just let user continue in that case.
-    if ret == IDABORT:
+    # Note the mapping of the labels in custom_msgbox()!
+    if ret == thomasa88lib.win.msgbox.IDCANCEL:
         eventArgs.isCanceled = True
-    elif ret == IDIGNORE:
+    elif ret == thomasa88lib.win.msgbox.IDCONTINUE:
         # Document.dataFile only works when the document is saved (then we can use "id")
         # Document.name always works but is the document name - include the vX version indicator.
         disabled_for_documents_.append(app_.activeDocument)
