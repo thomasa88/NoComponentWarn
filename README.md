@@ -31,7 +31,7 @@ This add-in is created by Thomas Axelsson.
 
 ## License
 
-This project is licensed under GPL v3 or any later version. See [LICENSE](LICENSE).
+This project is licensed under the terms of the MIT license. See [LICENSE](LICENSE).
 
 ## Changelog
 
