@@ -23,3 +23,10 @@ Press Shift+S in Fusion 360 and go to the *Add-Ins* tab. Then select the add-in 
 
 A warning will be shown every time a new feature is created outside a component.
 
+## Author
+
+This add-in is created by Thomas Axelsson.
+
+## License
+
+This project is licensed under GPL v3 or any later version. See [LICENSE](LICENSE).
