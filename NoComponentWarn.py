@@ -49,6 +49,7 @@ importlib.reload(thomasa88lib.win.msgbox)
 
 COMPONENT_WARN_ID = 'thomasa88_componentWarn'
 
+# All commands spelled out fully, to allow for fast matching
 CREATION_COMMANDS_ = set([
     'SketchCreate',
     'PrimitiveBox',
@@ -57,6 +58,18 @@ CREATION_COMMANDS_ = set([
     'PrimitiveTorus',
     'PrimitiveCoil',
     'PrimitivePipe',
+    'WorkPlaneFromPointAndFaceCommand',
+    'WorkPlaneFromThreePointsCommand',
+    'WorkPlaneFromTwoLinesCommand',
+    'WorkPlaneFromTwoPlanesCommand',
+    'WorkPlaneOffsetFromPlaneCommand',
+    'WorkPlaneTangentToCylinderCommand',
+    'WorkPointAlongPathCommand',
+    'WorkPointFromCircleOrSphereCommand',
+    'WorkPointFromLineAndPlaneCommand',
+    'WorkPointFromPointCommand',
+    'WorkPointFromThreePlanesCommand',
+    'WorkPointFromTwoLinesCommand',
 ])
 
 app_ = None
@@ -72,7 +85,7 @@ cmd_starting_handler_info_ = None
 def command_handler(args):
     eventArgs = adsk.core.ApplicationCommandEventArgs.cast(args)
     
-    #print("COMMAND", eventArgs.commandId, eventArgs.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
+    print("COMMAND", eventArgs.commandId, eventArgs.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
 
     # The quickest test first
     if app_.activeEditObject != app_.activeProduct.rootComponent:

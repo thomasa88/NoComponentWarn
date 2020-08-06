@@ -41,6 +41,11 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 0.2.3
+  * Warn on construction object creation as well
+  * More detailed usage instructions
+* v 0.2.2
+  * MIT license, for inclusion Autodesk app store
 * v 0.2.1
   * Fix duplicated words in dialog text
 * v 0.2.0
