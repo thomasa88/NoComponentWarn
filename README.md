@@ -41,6 +41,8 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 0.2.4
+  * Fix: Match all plane commands
 * v 0.2.3
   * Warn on construction object creation as well
   * More detailed usage instructions
