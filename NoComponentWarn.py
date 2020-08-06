@@ -49,37 +49,15 @@ importlib.reload(thomasa88lib.win.msgbox)
 
 COMPONENT_WARN_ID = 'thomasa88_componentWarn'
 
-# All commands spelled out fully, to allow for fast matching
-CREATION_COMMANDS_ = set([
-    'SketchCreate',
-    'PrimitiveBox',
-    'PrimitiveCylinder',
-    'PrimitiveSphere',
-    'PrimitiveTorus',
-    'PrimitiveCoil',
-    'PrimitivePipe',
-    'WorkAxisFromLineCommand',
-    'WorkAxisFromPointAndFaceCommand',
-    'WorkAxisFromTwoPlanesCommand',
-    'WorkAxisFromTwoPointsCommand',
-    'WorkAxisNormalToFaceCommand',
-    'WorkAxisThroughCylinderCommand',
-    'WorkOfflineCommand',
-    'WorkPlaneAlongPathCommand',
-    'WorkPlaneFromLineAndAngleCommand',
-    'WorkPlaneFromPointAndFaceCommand',
-    'WorkPlaneFromThreePointsCommand',
-    'WorkPlaneFromTwoLinesCommand',
-    'WorkPlaneFromTwoPlanesCommand',
-    'WorkPlaneOffsetFromPlaneCommand',
-    'WorkPlaneTangentToCylinderCommand',
-    'WorkPointAlongPathCommand',
-    'WorkPointFromCircleOrSphereCommand',
-    'WorkPointFromLineAndPlaneCommand',
-    'WorkPointFromPointCommand',
-    'WorkPointFromThreePlanesCommand',
-    'WorkPointFromTwoLinesCommand',
-])
+# (command ID, is prefix)
+CREATION_COMMANDS_ = [
+    ('SketchCreate', False),
+    ('Primitive', True),
+    # 'WorkOffline' matches 'Work'-only prefix
+    ('WorkPlane', True),
+    ('WorkAxis', True),
+    ('WorkPoint', True),
+]
 
 app_ = None
 ui_ = None
@@ -94,7 +72,7 @@ cmd_starting_handler_info_ = None
 def command_handler(args):
     eventArgs = adsk.core.ApplicationCommandEventArgs.cast(args)
     
-    print("COMMAND", eventArgs.commandId, eventArgs.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
+    #print("COMMAND", eventArgs.commandId, eventArgs.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
 
     # The quickest test first
     if app_.activeEditObject != app_.activeProduct.rootComponent:
@@ -106,7 +84,11 @@ def command_handler(args):
     if app_.activeDocument in disabled_for_documents_:
         return
 
-    if eventArgs.commandId not in CREATION_COMMANDS_:
+    for cmd, prefix in CREATION_COMMANDS_:
+        if ((prefix and eventArgs.commandId.startswith(cmd)) or
+            eventArgs.commandId == cmd):
+            break
+    else:
         return
 
     # We must use "created" or "starting" to catch Box and the other solids.
