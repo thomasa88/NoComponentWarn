@@ -30,6 +30,7 @@ import ctypes
 import os
 import re
 import sys
+import time
 
 NAME = 'NoComponentWarn'
 
@@ -68,11 +69,13 @@ manifest_ = thomasa88lib.manifest.read()
 
 disabled_for_documents_ = []
 cmd_starting_handler_info_ = None
+# Hold-off timer. Sketch create button triggers 2 starting SketchCreate in a row.
+last_continue_time_ = 0.0
 
-def command_handler(args):
-    eventArgs = adsk.core.ApplicationCommandEventArgs.cast(args)
+def command_handler(args: adsk.core.ApplicationCommandEventArgs):
+    global last_continue_time_
     
-    #print("COMMAND", eventArgs.commandId, eventArgs.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
+    #print("COMMAND", args.commandId, args.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
 
     # The quickest test first
     if app_.activeEditObject != app_.activeProduct.rootComponent:
@@ -85,10 +88,14 @@ def command_handler(args):
         return
 
     for cmd, prefix in CREATION_COMMANDS_:
-        if ((prefix and eventArgs.commandId.startswith(cmd)) or
-            eventArgs.commandId == cmd):
+        if ((prefix and args.commandId.startswith(cmd)) or
+            args.commandId == cmd):
             break
     else:
+        return
+    
+    if time.time() - last_continue_time_ < 3:
+        # Sketch create button hold-off
         return
 
     # We must use "created" or "starting" to catch Box and the other solids.
@@ -109,11 +116,17 @@ def command_handler(args):
     # Not checking for error. Just let user continue in that case.
     # Note the mapping of the labels in custom_msgbox()!
     if ret == thomasa88lib.win.msgbox.IDCANCEL:
-        eventArgs.isCanceled = True
+        # Cancel
+        args.isCanceled = True
     elif ret == thomasa88lib.win.msgbox.IDCONTINUE:
+        # Stop warning
+
         # Document.dataFile only works when the document is saved (then we can use "id")
         # Document.name always works but is the document name - include the vX version indicator.
         disabled_for_documents_.append(app_.activeDocument)
+    else:
+        # Continue
+        last_continue_time_ = time.time()
 
 def workspace_activated_handler(args: adsk.core.WorkspaceEventArgs):
     if args.workspace.id == 'FusionSolidEnvironment':
