@@ -159,8 +159,11 @@ def run(context):
         events_manager_.add_handler(ui_.workspacePreDeactivate,
                                     callback=workspace_pre_deactivate_handler)
         
-        if ui_.activeWorkspace.id == 'FusionSolidEnvironment':
-            enable()
+        if app_.isStartupComplete:
+            # Cannot check the workspaces if Fusion is starting up.
+            # Rely on the workspace event in that case.
+            if ui_.activeWorkspace.id == 'FusionSolidEnvironment':
+                enable()
 
 def stop(context):
     with error_catcher_:

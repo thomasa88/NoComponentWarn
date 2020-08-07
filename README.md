@@ -41,6 +41,8 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 0.2.6
+  * Fix: Make "Run on start-up" work
 * v 0.2.5
   * Fix: Don't double-trigger when sketch is created using button
 * v 0.2.4
