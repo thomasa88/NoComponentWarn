@@ -1,8 +1,8 @@
 # ![](resources/nocomponentwarn/32x32.png) NoComponentWarn
 
-A Fusion 360 add-in that warns when features are created outside components.
+A Fusion 360 add-in that warns when features are created outside components. It also warns when creating feature across components (It works if the reference feature is selected before creating the new feature).
 
-A warning will be shown every time a new feature is created outside a component. At that point, the user can choose to either Cancel, Continue or Stop the warning messages for the current document session.
+A warning will be shown every time a new feature is created at the top-level or in the wrong component. At that point, the user can choose to either Cancel, Continue or Stop the warning messages for the current document session.
 
 Currently Windows-only.
 
@@ -23,7 +23,7 @@ Make sure the directory is named `NoComponentWarn`, with no suffix.
 
 Press Shift+S in Fusion 360 and go to the *Add-Ins* tab. Then select the add-in and click the *Run* button. Optionally select *Run on Startup*.
 
-A warning will be shown every time a new feature is created outside a component.
+A warning will be shown every time a new feature is created at the top-level or in the wrong component.
 
 At that point, the following choices are given:
 
@@ -41,6 +41,8 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 1.0.0
+  * Warn when creating features in the wrong component.
 * v 0.2.6
   * Fix: Make "Run on start-up" work
 * v 0.2.5
