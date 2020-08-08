@@ -77,14 +77,14 @@ def command_handler(args: adsk.core.ApplicationCommandEventArgs):
     
     #print("COMMAND", args.commandId, args.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
 
-    # The quickest test first
-    if app_.activeEditObject != app_.activeProduct.rootComponent:
-        return
-
     # Checking disabled here. We would improve performance by checking in documentActivated, but
     # that event does not always fire (2020-08-02)
     # Bug: https://forums.autodesk.com/t5/fusion-360-api-and-scripts/api-bug-application-documentactivated-event-do-not-raise/m-p/9020750
     if app_.activeDocument in disabled_for_documents_:
+        return
+    
+    if time.time() - last_continue_time_ < 3:
+        # Sketch create button hold-off
         return
 
     for cmd, prefix in CREATION_COMMANDS_:
@@ -93,40 +93,48 @@ def command_handler(args: adsk.core.ApplicationCommandEventArgs):
             break
     else:
         return
-    
-    if time.time() - last_continue_time_ < 3:
-        # Sketch create button hold-off
-        return
 
-    # We must use "created" or "starting" to catch Box and the other solids.
-    # If we execute our own command at that step, we abort the command the user
-    # started. We could in theory re-execute that command, but we might lose
-    # data(?). Going for a MessageBox instead.
-    
-    # Using a button combo with "Cancel", as that will map to Esc
-    ret = thomasa88lib.win.msgbox.custom_msgbox('You are creating a feature without any component.',
-                                                f"No Component Warning (v {manifest_['version']})",
-                                                (thomasa88lib.win.msgbox.MB_ICONWARNING |
-                                                 thomasa88lib.win.msgbox.MB_CANCELTRYCONTINUE |
-                                                 thomasa88lib.win.msgbox.MB_DEFBUTTON2),
-                                                { thomasa88lib.win.msgbox.IDCANCEL: 'Cancel', # No localization
-                                                  thomasa88lib.win.msgbox.IDTRYAGAIN: '&Continue',
-                                                  thomasa88lib.win.msgbox.IDCONTINUE: "&Stop warning" })
-
-    # Not checking for error. Just let user continue in that case.
-    # Note the mapping of the labels in custom_msgbox()!
-    if ret == thomasa88lib.win.msgbox.IDCANCEL:
-        # Cancel
-        args.isCanceled = True
-    elif ret == thomasa88lib.win.msgbox.IDCONTINUE:
-        # Stop warning
-
-        # Document.dataFile only works when the document is saved (then we can use "id")
-        # Document.name always works but is the document name - include the vX version indicator.
-        disabled_for_documents_.append(app_.activeDocument)
+    error_msg = None
+    if app_.activeEditObject == app_.activeProduct.rootComponent:
+        error_msg = 'You are creating a feature without any component.'
     else:
-        # Continue
-        last_continue_time_ = time.time()
+        for sel in ui_.activeSelections:
+            if hasattr(sel, 'entity') and getattr(sel.entity, 'assemblyContext', None) is not None:
+                if sel.entity.assemblyContext.component != app_.activeEditObject:
+                    error_msg = 'You are creating a feature referencing another component.'
+                    break
+
+    if error_msg:
+        # We must use "created" or "starting" to catch Box and the other solids.
+        # Also, starting must be used for setting isCanceled.
+        # If we execute our own command in starting or created, we abort the command the user
+        # started. We could in theory re-execute that command, but we might lose
+        # data(?). Going for a MessageBox together with isCanceled instead.
+        
+        # Using a button combo with "Cancel", as that will map to Esc
+        ret = thomasa88lib.win.msgbox.custom_msgbox(error_msg,
+                                                    f"No Component Warning (v {manifest_['version']})",
+                                                    (thomasa88lib.win.msgbox.MB_ICONWARNING |
+                                                    thomasa88lib.win.msgbox.MB_CANCELTRYCONTINUE |
+                                                    thomasa88lib.win.msgbox.MB_DEFBUTTON2),
+                                                    { thomasa88lib.win.msgbox.IDCANCEL: 'Cancel', # No localization
+                                                    thomasa88lib.win.msgbox.IDTRYAGAIN: '&Continue',
+                                                    thomasa88lib.win.msgbox.IDCONTINUE: "&Stop warning" })
+
+        # Not checking for error return. Just let user continue in that case.
+        # Note the mapping of the labels in custom_msgbox()!
+        if ret == thomasa88lib.win.msgbox.IDCANCEL:
+            # Cancel
+            args.isCanceled = True
+        elif ret == thomasa88lib.win.msgbox.IDCONTINUE:
+            # Stop warning
+
+            # Document.dataFile only works when the document is saved (then we can use "id")
+            # Document.name always works but is the document name - include the vX version indicator.
+            disabled_for_documents_.append(app_.activeDocument)
+        else:
+            # Continue
+            last_continue_time_ = time.time()
 
 def workspace_activated_handler(args: adsk.core.WorkspaceEventArgs):
     if args.workspace.id == 'FusionSolidEnvironment':
