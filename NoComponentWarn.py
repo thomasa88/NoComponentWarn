@@ -58,6 +58,28 @@ CREATION_COMMANDS_ = [
     ('WorkPlane', True),
     ('WorkAxis', True),
     ('WorkPoint', True),
+    ('Extrude', False),
+    ('Revolve', False),
+    ('Sweep', False),
+    ('SolidLoft', False),
+    ('FusionRibCommand', False),
+    ('FusionWebCommand', False),
+    ('EmbossCmd', False),
+    ('FusionHoleCommand', False),
+    ('FusionThreadCommand', False),
+    ('PatternRectangular', False),
+    ('PatternCircular', False),
+    ('PatternOnPath', False),
+    ('MirrorCommand', False),
+    ('FusionSurfaceThickenCommand', False),
+    ('SurfaceSculpt', False), # Boundary Fill
+    ('SurfaceExtrude', False),
+    ('SurfaceRevolve', False),
+    ('SurfaceSweep', False),
+    ('SurfaceLoft', False),
+    ('FusionSurfacePatchCommand', False),
+    ('FusionSurfaceRuledCommand', False),
+    ('FusionSurfaceOffsetCommand', False),
 ]
 
 app_ = None
@@ -76,6 +98,7 @@ def command_handler(args: adsk.core.ApplicationCommandEventArgs):
     global last_continue_time_
     
     #print("COMMAND", args.commandId, args.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
+    #args.isCanceled = True
 
     # Checking disabled here. We would improve performance by checking in documentActivated, but
     # that event does not always fire (2020-08-02)
