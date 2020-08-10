@@ -120,7 +120,7 @@ def command_handler(args: adsk.core.ApplicationCommandEventArgs):
     error_msg = None
     if app_.activeEditObject == app_.activeProduct.rootComponent:
         error_msg = 'You are creating a feature without any component.'
-    else:
+    elif isinstance(app_.activeEditObject, adsk.fusion.Component):
         for sel in ui_.activeSelections:
             if hasattr(sel, 'entity') and getattr(sel.entity, 'assemblyContext', None) is not None:
                 if sel.entity.assemblyContext.component != app_.activeEditObject:
