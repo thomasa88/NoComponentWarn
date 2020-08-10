@@ -41,6 +41,8 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 1.0.1
+  * Fix: Don't warn when creating a solid feature from sketch face while in the sketch.
 * v 1.0.0
   * Warn when creating features in the wrong component.
 * v 0.2.6
