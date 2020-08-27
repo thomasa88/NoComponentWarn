@@ -21,8 +21,6 @@ Make sure the directory is named `NoComponentWarn`, with no suffix.
 
 ## Usage
 
-Press Shift+S in Fusion 360 and go to the *Add-Ins* tab. Then select the add-in and click the *Run* button. Optionally select *Run on Startup*.
-
 A warning will be shown every time a new feature is created at the top-level or in the wrong component.
 
 At that point, the following choices are given:
@@ -30,6 +28,8 @@ At that point, the following choices are given:
 * *Cancel* (Esc): Cancel the operation
 * *Continue* (Enter): Go through with the operation and create the feature
 * *Stop warning*: Go through with the operation and stop warning for this document for this session.
+
+The add-in can be temporarily disabled using the *Scripts and Add-ins* dialog. Press *Shift+S* in Fusion 360™ and go to the *Add-Ins* tab.
 
 ## Author
 
@@ -41,6 +41,8 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 1.0.2
+  * Enable *Run on Startup* by default.
 * v 1.0.1
   * Fix: Don't warn when creating a solid feature from sketch face while in the sketch.
 * v 1.0.0
