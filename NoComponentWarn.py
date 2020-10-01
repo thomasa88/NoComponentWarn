@@ -26,27 +26,32 @@
 
 import adsk.core, adsk.fusion, adsk.cam, traceback
 
-import ctypes
 import os
+import platform
 import re
+import subprocess
 import sys
 import time
 
 NAME = 'NoComponentWarn'
+
+platform_ = platform.system()
 
 # Must import lib as unique name, to avoid collision with other versions
 # loaded by other add-ins
 from .thomasa88lib import events
 from .thomasa88lib import manifest
 from .thomasa88lib import error
-from .thomasa88lib.win import msgbox
+if platform_ == 'Windows':
+    from .thomasa88lib.win import msgbox
 
 # Force modules to be fresh during development
 import importlib
 importlib.reload(thomasa88lib.events)
 importlib.reload(thomasa88lib.manifest)
 importlib.reload(thomasa88lib.error)
-importlib.reload(thomasa88lib.win.msgbox)
+if platform_ == 'Windows':
+    importlib.reload(thomasa88lib.win.msgbox)
 
 COMPONENT_WARN_ID = 'thomasa88_componentWarn'
 
@@ -133,23 +138,56 @@ def command_handler(args: adsk.core.ApplicationCommandEventArgs):
         # If we execute our own command in starting or created, we abort the command the user
         # started. We could in theory re-execute that command, but we might lose
         # data(?). Going for a MessageBox together with isCanceled instead.
-        
-        # Using a button combo with "Cancel", as that will map to Esc
-        ret = thomasa88lib.win.msgbox.custom_msgbox(error_msg,
-                                                    f"No Component Warning (v {manifest_['version']})",
-                                                    (thomasa88lib.win.msgbox.MB_ICONWARNING |
-                                                    thomasa88lib.win.msgbox.MB_CANCELTRYCONTINUE |
-                                                    thomasa88lib.win.msgbox.MB_DEFBUTTON2),
-                                                    { thomasa88lib.win.msgbox.IDCANCEL: 'Cancel', # No localization
-                                                    thomasa88lib.win.msgbox.IDTRYAGAIN: '&Continue',
-                                                    thomasa88lib.win.msgbox.IDCONTINUE: "&Stop warning" })
 
-        # Not checking for error return. Just let user continue in that case.
-        # Note the mapping of the labels in custom_msgbox()!
-        if ret == thomasa88lib.win.msgbox.IDCANCEL:
+        RET_CANCEL = 1
+        RET_DISABLE = 2
+        RET_CONTINUE = 3
+        dialog_title = f"No Component Warning (v {manifest_['version']})"
+        if platform_ == 'Windows':
+            # Using a button combo with "Cancel", as that will map to Esc
+            ret = thomasa88lib.win.msgbox.custom_msgbox(error_msg,
+                                                        dialog_title,
+                                                        (thomasa88lib.win.msgbox.MB_ICONWARNING |
+                                                        thomasa88lib.win.msgbox.MB_CANCELTRYCONTINUE |
+                                                        thomasa88lib.win.msgbox.MB_DEFBUTTON2),
+                                                        { thomasa88lib.win.msgbox.IDCANCEL: 'Cancel', # No localization
+                                                        thomasa88lib.win.msgbox.IDTRYAGAIN: '&Continue',
+                                                        thomasa88lib.win.msgbox.IDCONTINUE: "&Stop warning" })
+
+            # Not checking for error return. Just let user continue in that case.
+            # Note the mapping of the labels in custom_msgbox()!
+            if ret == thomasa88lib.win.msgbox.IDCANCEL:
+                ret = RET_CANCEL
+            elif ret == thomasa88lib.win.msgbox.IDCONTINUE:
+                ret = RET_DISABLE
+            else:
+                ret = RET_CONTINUE
+        else:
+            TEXT_CANCEL = 'Cancel'
+            TEXT_CONTINUE = 'Continue'
+            TEXT_DISABLE = 'Stop warning'
+            # Map buttons to map Windows version
+            # It looks like Mac has no equivalen to Windows' "&" hotkey markers.
+            result = subprocess.run(['osascript', '-e',
+                             'button returned of ('
+                             f'display dialog "{error_msg}" with title "{dialog_title}" '
+                             f'buttons {{"{TEXT_CANCEL}", "{TEXT_CONTINUE}", "{TEXT_DISABLE}"}} '
+                             'default button 2 cancel button 1 with icon caution'
+                             ')'],
+                             encoding='utf-8', capture_output=True)
+            reply = result.stdout.strip()
+            # "Esc" key results in returnCode == 1. It seems that the clicking the button gives the same result.
+            if result.returncode == 1 or reply == TEXT_CANCEL:
+                ret = RET_CANCEL
+            elif reply == TEXT_DISABLE:
+                ret = RET_DISABLE
+            else:
+                ret = RET_CONTINUE
+
+        if ret == RET_CANCEL:
             # Cancel
             args.isCanceled = True
-        elif ret == thomasa88lib.win.msgbox.IDCONTINUE:
+        elif ret == RET_DISABLE:
             # Stop warning
 
             # Document.dataFile only works when the document is saved (then we can use "id")
