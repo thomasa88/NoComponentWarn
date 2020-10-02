@@ -4,15 +4,19 @@ A Fusion 360 add-in that warns when features are created outside components. It 
 
 A warning will be shown every time a new feature is created at the top-level or in the wrong component. At that point, the user can choose to either Cancel, Continue or Stop the warning messages for the current document session.
 
-Currently Windows-only.
-
 
 
 ![Screenshot](screenshot.png)
 
 
 
+## Supported Platforms
+
+* Windows
+* Mac OS
+
 ## Installation
+
 Download the add-in from the [Releases](https://github.com/thomasa88/NoComponentWarn/releases) page.
 
 Unpack it into `API\AddIns` (see [How to install an add-in or script in Fusion 360](https://knowledge.autodesk.com/support/fusion-360/troubleshooting/caas/sfdcarticles/sfdcarticles/How-to-install-an-ADD-IN-and-Script-in-Fusion-360.html)).
@@ -31,6 +35,12 @@ At that point, the following choices are given:
 
 The add-in can be temporarily disabled using the *Scripts and Add-ins* dialog. Press *Shift+S* in Fusion 360™ and go to the *Add-Ins* tab.
 
+## Reporting Issues
+
+Please report any issues that you find on the [Issues](https://github.com/thomasa88/NoComponentWarn/issues) page.
+
+For better support, please include the steps you performed and the result. Also include copies of any error messages.
+
 ## Author
 
 This add-in is created by Thomas Axelsson.
@@ -39,8 +49,16 @@ This add-in is created by Thomas Axelsson.
 
 This project is licensed under the terms of the MIT license. See [LICENSE](LICENSE).
 
+## More Fusion 360™ Add-ins
+
+[My Fusion 360™ app store page](https://apps.autodesk.com/en/Publisher/PublisherHomepage?ID=JLH9M8296BET)
+
+[All my add-ins on Github](https://github.com/topics/fusion-360?q=user%3Athomasa88)
+
 ## Changelog
 
+* v 1.1.0
+  * Mac OS support
 * v 1.0.2
   * Enable *Run on Startup* by default.
 * v 1.0.1
