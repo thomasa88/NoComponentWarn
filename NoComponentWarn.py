@@ -103,7 +103,17 @@ def command_handler(args: adsk.core.ApplicationCommandEventArgs):
     global last_continue_time_
     
     #print("COMMAND", args.commandId, args.terminationReason, app_.activeEditObject.name, app_.activeEditObject.classType())
-    #args.isCanceled = True
+    design = adsk.fusion.Design.cast(app_.activeProduct)
+    if not design:
+        return
+
+    # One is intended to create features directly in the root component for part designs
+    try:
+        if design.designIntent == adsk.fusion.DesignIntentTypes.PartDesignIntentType:
+            return
+    except:
+        # designIntent is an experimental API
+        pass
 
     # Checking disabled here. We would improve performance by checking in documentActivated, but
     # that event does not always fire (2020-08-02)
@@ -123,7 +133,7 @@ def command_handler(args: adsk.core.ApplicationCommandEventArgs):
         return
 
     error_msg = None
-    if app_.activeEditObject == app_.activeProduct.rootComponent:
+    if app_.activeEditObject == design.rootComponent:
         error_msg = 'You are creating a feature without any component.'
     elif isinstance(app_.activeEditObject, adsk.fusion.Component):
         for sel in ui_.activeSelections:

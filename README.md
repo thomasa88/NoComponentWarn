@@ -57,6 +57,8 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 1.2.0 (March 2026)
+  * Don't warn in part design mode
 * v 1.1.0
   * Mac OS support
 * v 1.0.2
