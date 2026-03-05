@@ -44,6 +44,7 @@ from .thomasa88lib import manifest
 from .thomasa88lib import error
 if platform_ == 'Windows':
     from .thomasa88lib.win import msgbox
+from .thomasa88lib import settings
 
 # Force modules to be fresh during development
 import importlib
@@ -52,6 +53,7 @@ importlib.reload(thomasa88lib.manifest)
 importlib.reload(thomasa88lib.error)
 if platform_ == 'Windows':
     importlib.reload(thomasa88lib.win.msgbox)
+importlib.reload(thomasa88lib.settings)
 
 COMPONENT_WARN_ID = 'thomasa88_componentWarn'
 
@@ -87,17 +89,21 @@ CREATION_COMMANDS_ = [
     ('FusionSurfaceOffsetCommand', False),
 ]
 
-app_ = None
-ui_ = None
+app_: adsk.core.Application = None
+ui_: adsk.core.UserInterface = None
 
 error_catcher_ = thomasa88lib.error.ErrorCatcher(msgbox_in_debug=False)
 events_manager_ = thomasa88lib.events.EventsManager(error_catcher_)
 manifest_ = thomasa88lib.manifest.read()
+default_settings = { 'only_allow_leaf': False }
+settings_ = thomasa88lib.settings.SettingsManager(default_settings)
 
 disabled_for_documents_ = []
 cmd_starting_handler_info_ = None
 # Hold-off timer. Sketch create button triggers 2 starting SketchCreate in a row.
 last_continue_time_ = 0.0
+# Minimize setting look-up overhead
+only_allow_leaf_ = settings_.get('only_allow_leaf')
 
 def command_handler(args: adsk.core.ApplicationCommandEventArgs):
     global last_continue_time_
@@ -132,10 +138,17 @@ def command_handler(args: adsk.core.ApplicationCommandEventArgs):
     else:
         return
 
+    comp = adsk.fusion.Component.cast(app_.activeEditObject)
+    if not comp:
+        return
+
     error_msg = None
-    if app_.activeEditObject == design.rootComponent:
+    if comp == design.rootComponent:
         error_msg = 'You are creating a feature without any component.'
-    elif isinstance(app_.activeEditObject, adsk.fusion.Component):
+    elif only_allow_leaf_ and comp.occurrences.count > 0:
+        # A leaf component would have no child occurrences
+        error_msg = 'You are creating a feature in a non-leaf component.'
+    else:
         for sel in ui_.activeSelections:
             if hasattr(sel, 'entity') and getattr(sel.entity, 'assemblyContext', None) is not None:
                 if sel.entity.assemblyContext.component != app_.activeEditObject:
